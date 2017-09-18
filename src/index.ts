@@ -22,20 +22,31 @@ export interface IRouterConfig {
     hostname?: string;
 }
 
-function getDefaultConfig(): IRouterConfig {
+export interface IRoutletConfig {
+    baseUrl?: string;
+}
+
+function getDefaultRouterConfig(): IRouterConfig {
     return {
         port: 3000,
         hostname: "127.0.0.1"
-    }
+    };
+}
+
+function getDefaultRoutletConfig(): IRoutletConfig {
+    return {
+        baseUrl: ""
+    };
 }
 
 export default class Router {
     private static routers: Map<string, Router> = new Map();
     private static readonly ROUTER_ID = "expressRouterId";
 
-    private app;
+    private app: express.Express;
     private cls: Object;
     private config: IRouterConfig;
+    private baseUrl: string = "";
 
     private static getRouter(target: any): Router {
         if (target[this.ROUTER_ID] === undefined) {
@@ -46,7 +57,14 @@ export default class Router {
         return this.routers.get(target[this.ROUTER_ID]);
     }
 
-    public static Application(config: IRouterConfig | express.Express): ClassDecorator {
+    public static Application(config: IRouterConfig): ClassDecorator;
+    public static Application(app: express.Express, config?: IRoutletConfig): ClassDecorator
+    public static Application(configOrApp: IRouterConfig | express.Express, config?: IRoutletConfig): ClassDecorator {
+        let app: express.Express;
+        if (config || typeof configOrApp === "function") {
+            app = configOrApp as express.Express;
+            config = { ...getDefaultRoutletConfig(), ...config };
+        }
         return (cls: any) => {
             let router: Router = this.routers.get(cls.prototype[this.ROUTER_ID]);
             if (!router) {
@@ -54,12 +72,13 @@ export default class Router {
             }
             router.cls = new cls();
             let listen: boolean = true;
-            if (typeof config === "function") {
-                router.app = config;
+            if (app) {
+                router.app = app;
+                router.baseUrl = config.baseUrl;
                 listen = false;
             } else {
                 router.app = express();
-                router.config = { ...getDefaultConfig(), ...config };
+                router.config = { ...getDefaultRouterConfig(), ...configOrApp };
             }
             router.start(listen);
         }
@@ -84,7 +103,7 @@ export default class Router {
             const value = (...args: any[]) => {
                 const fn: express.RequestHandler = descriptor.value as any;
                 if (args[0] === null) {
-                    router.app[method](path, (req, res, next) => {
+                    router.app[method](router.baseUrl + path, (req, res, next) => {
                         return fn(req, res, next);
                     });
                 } else {

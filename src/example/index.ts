@@ -36,7 +36,7 @@ class App2 {
     }
 }
 
-@Router.Application(ap)
+@Router.Application(ap, { baseUrl: "/yo" })
 class App3 {
 
     @Router.Route("/holla")
@@ -53,7 +53,7 @@ async function main() {
         console.log(await rp.get("http://localhost:3000/demo"));
         console.log(await rp.get("http://localhost:3001/"));
         console.log(await rp.get("http://localhost:3001/demo"));
-        console.log(await rp.get("http://localhost:3001/holla"));
+        console.log(await rp.get("http://localhost:3001/yo/holla"));
     } catch (e) {
         console.warn(e);
     }
