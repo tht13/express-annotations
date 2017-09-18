@@ -20,8 +20,8 @@ class App {
         console.log("This is not a route");
     }
 }
-
-@Router.Application({ port: 3001 })
+const ap = express();
+@Router.Application(ap)
 class App2 {
 
     @Router.Route("/")
@@ -34,17 +34,29 @@ class App2 {
     public demo(req: express.Request, res: express.Response, next: express.NextFunction) {
         res.send("bar");
     }
-
-    public example() {
-        console.log("This is not a route");
-    }
 }
 
+@Router.Application(ap)
+class App3 {
+
+    @Router.Route("/holla")
+    public holla(req: express.Request, res: express.Response, next: express.NextFunction) {
+        res.send("baz");
+    }
+
+}
+ap.listen(3001);
+
 async function main() {
-    console.log(await rp.get("http://localhost:3000/"));
-    console.log(await rp.get("http://localhost:3000/demo"));
-    console.log(await rp.get("http://localhost:3001/"));
-    console.log(await rp.get("http://localhost:3001/demo"));
+    try {
+        console.log(await rp.get("http://localhost:3000/"));
+        console.log(await rp.get("http://localhost:3000/demo"));
+        console.log(await rp.get("http://localhost:3001/"));
+        console.log(await rp.get("http://localhost:3001/demo"));
+        console.log(await rp.get("http://localhost:3001/holla"));
+    } catch (e) {
+        console.warn(e);
+    }
 }
 
 main();

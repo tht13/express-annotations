@@ -20,7 +20,6 @@ function isValidMethod(method: string): boolean {
 export interface IRouterConfig {
     port?: number;
     hostname?: string;
-
 }
 
 function getDefaultConfig(): IRouterConfig {
@@ -34,7 +33,7 @@ export default class Router {
     private static routers: Map<string, Router> = new Map();
     private static readonly ROUTER_ID = "expressRouterId";
 
-    private readonly app = express();
+    private app;
     private cls: Object;
     private config: IRouterConfig;
 
@@ -47,15 +46,22 @@ export default class Router {
         return this.routers.get(target[this.ROUTER_ID]);
     }
 
-    public static Application(config: IRouterConfig): ClassDecorator {
+    public static Application(config: IRouterConfig | express.Express): ClassDecorator {
         return (cls: any) => {
             let router: Router = this.routers.get(cls.prototype[this.ROUTER_ID]);
             if (!router) {
                 throw new Error("Class has no routes");
             }
-            router.config = { ...getDefaultConfig(), ...config };
             router.cls = new cls();
-            router.start();
+            let listen: boolean = true;
+            if (typeof config === "function") {
+                router.app = config;
+                listen = false;
+            } else {
+                router.app = express();
+                router.config = { ...getDefaultConfig(), ...config };
+            }
+            router.start(listen);
         }
     }
 
@@ -93,9 +99,9 @@ export default class Router {
         }
     }
 
-    constructor() { }
+    private constructor() { }
 
-    private start() {
+    private start(listen: boolean) {
         const objProto = Object.getPrototypeOf(this.cls);
         const keys = Object.getOwnPropertyNames(objProto).sort().filter((e, i, arr) => {
             let descriptor = Object.getOwnPropertyDescriptor(objProto, e);
@@ -108,6 +114,8 @@ export default class Router {
         for (let key of keys) {
             this.cls[key](null);
         }
-        this.app.listen(this.config.port, this.config.hostname);
+        if (listen) {
+            this.app.listen(this.config.port, this.config.hostname);
+        }
     }
 }
