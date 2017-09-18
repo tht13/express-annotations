@@ -11,7 +11,7 @@ class App {
     }
 
 
-    @Router.Route(HttpMethods.GET, "/demo")
+    @Router.Route(HttpMethods.POST, "/post")
     public demo(req: express.Request, res: express.Response, next: express.NextFunction) {
         res.send("bar");
     }
@@ -28,15 +28,9 @@ class App2 {
     public root(req: express.Request, res: express.Response, next: express.NextFunction) {
         res.send("foo");
     }
-
-
-    @Router.Route(HttpMethods.GET, "/demo")
-    public demo(req: express.Request, res: express.Response, next: express.NextFunction) {
-        res.send("bar");
-    }
 }
 
-@Router.Application(ap, { baseUrl: "/yo" })
+@Router.Application(ap, { baseUrl: "/secondController" })
 class App3 {
 
     @Router.Route("/holla")
@@ -50,10 +44,9 @@ ap.listen(3001);
 async function main() {
     try {
         console.log(await rp.get("http://localhost:3000/"));
-        console.log(await rp.get("http://localhost:3000/demo"));
+        console.log(await rp.post("http://localhost:3000/post"));
         console.log(await rp.get("http://localhost:3001/"));
-        console.log(await rp.get("http://localhost:3001/demo"));
-        console.log(await rp.get("http://localhost:3001/yo/holla"));
+        console.log(await rp.get("http://localhost:3001/secondController/holla"));
     } catch (e) {
         console.warn(e);
     }
