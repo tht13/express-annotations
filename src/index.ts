@@ -5,7 +5,7 @@ export enum HttpMethods {
     GET = "get",
     POST = "post",
     DELETE = "delete",
-    PUT = "put"   
+    PUT = "put"
 }
 
 function isValidMethod(method: string): boolean {
@@ -17,23 +17,39 @@ function isValidMethod(method: string): boolean {
     return false;
 }
 
-export class Router {
+export interface IRouterConfig {
+    port?: number;
+    hostname?: string;
+
+}
+
+function getDefaultConfig(): IRouterConfig {
+    return {
+        port: 3000,
+        hostname: "127.0.0.1"
+    }
+}
+
+export default class Router {
+    private static routers: Map<string, Router> = new Map();
+
     private readonly app = express();
     private cls: Object;
-    private port: number;
+    private config: IRouterConfig;
 
-    public readonly Application: (port: number) => ClassDecorator = port => {
-        this.port = port;
+    public static readonly Application: (config: IRouterConfig) => ClassDecorator = config => {
+        const router = new Router();
+        router.config = { ...getDefaultConfig(), ...config };
         return (cls: any) => {
             console.log(`has class: ${cls.name}`);
-            this.cls = new cls();
-            this.start();
+            router.cls = new cls();
+            router.start();
         }
     }
 
-    public route(path: string): MethodDecorator;
-    public route(method: HttpMethods, path: string): MethodDecorator;
-    public route(pathOrMethod: string, path?: string): MethodDecorator {
+    public static route(path: string): MethodDecorator;
+    public static route(method: HttpMethods, path: string): MethodDecorator;
+    public static route(pathOrMethod: string, path?: string): MethodDecorator {
         let method: string;
         if (path === undefined) {
             path = pathOrMethod;
@@ -48,14 +64,15 @@ export class Router {
         console.log(`register path: ${path}, id: ${id}`);
         return (target, key, descriptor) => {
             console.log(`Call path: ${path}, id: ${id}`);
+            console.log(target);
             const value = (...args: any[]) => {
                 const fn: express.RequestHandler = descriptor.value as any;
                 if (args[0] === null) {
                     console.log(`connecting path: ${path}, id: ${id}`);
-                    this.app[method](path, (req, res, next) => {
-                        console.log(`triggering path: ${path}, id: ${id}`);
-                        return fn(req, res, next);
-                    });
+                    // this.app[method](path, (req, res, next) => {
+                    //     console.log(`triggering path: ${path}, id: ${id}`);
+                    //     return fn(req, res, next);
+                    // });
                 } else {
                     throw new Error("Router.start() was not called");
                 }
@@ -86,9 +103,6 @@ export class Router {
             console.log(`starting key: ${key}`);
             this.cls[key](null);
         }
-        this.app.listen(3000);
+        this.app.listen(this.config.port, this.config.hostname);
     }
 }
-
-const ex = () => new Router();
-export default ex;

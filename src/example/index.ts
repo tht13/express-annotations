@@ -1,8 +1,7 @@
-import rt, { HttpMethods } from "../";
+import Router, { HttpMethods } from "../";
 import * as express from "express";
-const Router = rt();
 
-@Router.Application(3000)
+@Router.Application({port: 3000})
 class App {
 
     @Router.route("/")
