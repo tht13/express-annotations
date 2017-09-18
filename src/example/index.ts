@@ -1,7 +1,8 @@
 import Router, { HttpMethods } from "../";
 import * as express from "express";
+import * as rp from "request-promise-native";
 
-@Router.Application({port: 3000})
+@Router.Application({ port: 3000 })
 class App {
 
     @Router.Route("/")
@@ -20,7 +21,7 @@ class App {
     }
 }
 
-@Router.Application({port: 3001})
+@Router.Application({ port: 3001 })
 class App2 {
 
     @Router.Route("/")
@@ -38,3 +39,12 @@ class App2 {
         console.log("This is not a route");
     }
 }
+
+async function main() {
+    console.log(await rp.get("http://localhost:3000/"));
+    console.log(await rp.get("http://localhost:3000/demo"));
+    console.log(await rp.get("http://localhost:3001/"));
+    console.log(await rp.get("http://localhost:3001/demo"));
+}
+
+main();
