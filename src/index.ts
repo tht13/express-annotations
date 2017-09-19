@@ -1,20 +1,12 @@
 import * as express from "express";
 import { v4 } from "uuid";
+import { getDefaultRouterConfig, getDefaultRoutletConfig, isValidMethod, IRoute } from "./helpers";
 
 export enum HttpMethods {
     GET = "get",
     POST = "post",
     DELETE = "delete",
     PUT = "put"
-}
-
-function isValidMethod(method: string): boolean {
-    for (let key of Object.keys(HttpMethods)) {
-        if (HttpMethods[key] === method) {
-            return true;
-        }
-    }
-    return false;
 }
 
 export interface IRouterConfig {
@@ -26,19 +18,6 @@ export interface IRoutletConfig {
     baseUrl?: string;
 }
 
-function getDefaultRouterConfig(): IRouterConfig {
-    return {
-        port: 3000,
-        hostname: "127.0.0.1"
-    };
-}
-
-function getDefaultRoutletConfig(): IRoutletConfig {
-    return {
-        baseUrl: ""
-    };
-}
-
 export default class Router {
     private static routers: Map<string, Router> = new Map();
     private static readonly ROUTER_ID = "expressRouterId";
@@ -47,6 +26,7 @@ export default class Router {
     private cls: Object;
     private config: IRouterConfig;
     private baseUrl: string = "";
+    private routes: Set<IRoute> = new Set();
 
     private static getRouter(target: any): Router {
         if (target[this.ROUTER_ID] === undefined) {
@@ -97,21 +77,24 @@ export default class Router {
         if (!isValidMethod(method)) {
             throw new Error("Incorrect method");
         }
-        const id = v4();
         return (target, key, descriptor) => {
             const router = this.getRouter(target);
+            const route: IRoute = { path: router.baseUrl + path, method };
             const value = (...args: any[]) => {
                 const fn: express.RequestHandler = descriptor.value as any;
                 if (args[0] === null) {
-                    router.app[method](router.baseUrl + path, (req, res, next) => {
+                    router.app[route.method](route.path, (req, res, next) => {
                         return fn(req, res, next);
                     });
                 } else {
                     throw new Error("Router.start() was not called");
                 }
             };
-            Object.defineProperty(value, "isRoute", { value: true });
-            const rtn: any = {
+            Object.defineProperties(value, {
+                isRoute: { value: true },
+                routeProperties: { value: route }
+            });
+            const rtn: TypedPropertyDescriptor<any> = {
                 value
             }
             return rtn;
@@ -129,7 +112,7 @@ export default class Router {
                 e != arr[i + 1] &&
                 typeof this.cls[e] == 'function' &&
                 e !== 'constructor') ? true : false;
-        });;
+        });
         for (let key of keys) {
             this.cls[key](null);
         }
