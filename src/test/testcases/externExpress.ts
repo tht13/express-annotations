@@ -1,8 +1,6 @@
-import Router from "../";
+import Router from "../../";
 import * as express from "express";
-import * as rp from "request-promise-native";
-import { getRandomPort, getRoutes } from "./testHelper";
-import * as mocha from "mocha";
+import { getRandomPort, getRoutes, ITestFile } from "../testHelper";
 import { Server } from "http";
 
 const port: number = getRandomPort();
@@ -26,17 +24,18 @@ class App3 {
     }
 
 }
-let server: Server = ap.listen(port);
 
-async function main(): Promise<void> {
-    try {
-        for (let route of [...getRoutes(App2), ...getRoutes(App3)]) {
-            console.log(await rp[route.method](`http://localhost:${port}${route.path}`));
-        }
+const server: Server = ap.listen(port, () => {
+    console.log("blah");
+});
+
+const testcase: ITestFile = {
+    classes: [App2, App3],
+    port,
+    shutdown: () => {
         server.close();
-    } catch (e) {
-        console.warn(e);
+        return Promise.resolve();
     }
-}
+};
 
-main();
+export default testcase;

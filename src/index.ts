@@ -47,7 +47,7 @@ export default class Router {
     public static Application(configOrApp: IRouterConfig | express.Express, routletConfig?: IRoutletConfig): ClassDecorator {
         let app: express.Express;
         let config: IRouterConfig | IRoutletConfig;
-        if (config && typeof configOrApp === "function") {
+        if (config || typeof configOrApp === "function") {
             app = configOrApp as express.Express;
             config = { ...getDefaultRoutletConfig(), ...routletConfig };
         } else {
