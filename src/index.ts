@@ -1,6 +1,7 @@
 import * as express from "express";
 import { v4 } from "uuid";
 import { getDefaultRouterConfig, getDefaultRoutletConfig, isValidMethod, IRoute } from "./helpers";
+import { Server } from "http";
 
 export enum HttpMethods {
     GET = "get",
@@ -10,6 +11,8 @@ export enum HttpMethods {
 }
 
 export interface IRouterConfig {
+    /** Adds a `/shutdown` route to the router */
+    shutdownRoute?: string;
     port?: number;
     hostname?: string;
 }
@@ -27,6 +30,8 @@ export default class Router {
     private config: IRouterConfig;
     private baseUrl: string = "";
     private routes: Set<IRoute> = new Set();
+    private expressListen: boolean = true;
+    private server: Server;
 
     private static getRouter(target: any): Router {
         if (target[this.ROUTER_ID] === undefined) {
@@ -39,11 +44,14 @@ export default class Router {
 
     public static Application(config: IRouterConfig): ClassDecorator;
     public static Application(app: express.Express, config?: IRoutletConfig): ClassDecorator;
-    public static Application(configOrApp: IRouterConfig | express.Express, config?: IRoutletConfig): ClassDecorator {
+    public static Application(configOrApp: IRouterConfig | express.Express, routletConfig?: IRoutletConfig): ClassDecorator {
         let app: express.Express;
-        if (config || typeof configOrApp === "function") {
+        let config: IRouterConfig | IRoutletConfig;
+        if (config && typeof configOrApp === "function") {
             app = configOrApp as express.Express;
-            config = { ...getDefaultRoutletConfig(), ...config };
+            config = { ...getDefaultRoutletConfig(), ...routletConfig };
+        } else {
+            config = { ...getDefaultRouterConfig(), ...configOrApp };
         }
         return (cls: any) => {
             let router: Router = this.routers.get(cls.prototype[this.ROUTER_ID]);
@@ -51,17 +59,16 @@ export default class Router {
                 throw new Error("Class has no routes");
             }
             router.cls = new cls();
-            let listen: boolean = true;
             if (app) {
                 router.app = app;
-                router.baseUrl = config.baseUrl;
-                listen = false;
+                router.baseUrl = (config as IRoutletConfig).baseUrl;
+                router.expressListen = false;
             } else {
                 router.app = express();
-                router.config = { ...getDefaultRouterConfig(), ...configOrApp };
+                router.config = config as IRouterConfig;
             }
-            router.start(listen);
-        }
+            router.start();
+        };
     }
 
     public static Route(path: string): MethodDecorator;
@@ -103,7 +110,7 @@ export default class Router {
 
     private constructor() { }
 
-    private start(listen: boolean): void {
+    private start(): void {
         const objProto: object = Object.getPrototypeOf(this.cls);
         const keys: string[] = Object.getOwnPropertyNames(objProto).sort().filter((e, i, arr) => {
             let descriptor: PropertyDescriptor = Object.getOwnPropertyDescriptor(objProto, e);
@@ -116,8 +123,14 @@ export default class Router {
         for (let key of keys) {
             this.cls[key](null);
         }
-        if (listen) {
-            this.app.listen(this.config.port, this.config.hostname);
+        if (this.expressListen) {
+            this.server = this.app.listen(this.config.port, this.config.hostname);
+            if (this.config.shutdownRoute) {
+                this.app.get(this.config.shutdownRoute, (req, res) => {
+                    res.status(200).end();
+                    this.server.close();
+                });
+            }
         }
     }
 }
