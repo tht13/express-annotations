@@ -17,14 +17,15 @@
     "@types/express": "^4.0.37",
     "@types/request-promise-native": "^1.0.6",
     "@types/uuid": "^3.4.2",
-    "typescript": "^2.5.2"
-  },
-  "dependencies": {
+    "mocha": "^3.5.3",
+    "typescript": "^2.5.2",
     "express": "^4.15.4",
     "request": "^2.81.0",
-    "request-promise-native": "^1.0.4",
-    "tslib": "^1.7.1",
-    "uuid": "^3.1.0"
+    "request-promise-native": "^1.0.4"
+  },
+  "dependencies": {
+    "tslib": "1.7.1",
+    "uuid": "3.1.0"
   },
   "peerDependencies": {
     "express": "^4.15.4"
