@@ -30,7 +30,7 @@ export default class Router {
 
     private static getRouter(target: any): Router {
         if (target[this.ROUTER_ID] === undefined) {
-            const id = v4();
+            const id: string = v4();
             Object.defineProperty(target, this.ROUTER_ID, { value: id, writable: false });
             this.routers.set(id, new Router());
         }
@@ -38,7 +38,7 @@ export default class Router {
     }
 
     public static Application(config: IRouterConfig): ClassDecorator;
-    public static Application(app: express.Express, config?: IRoutletConfig): ClassDecorator
+    public static Application(app: express.Express, config?: IRoutletConfig): ClassDecorator;
     public static Application(configOrApp: IRouterConfig | express.Express, config?: IRoutletConfig): ClassDecorator {
         let app: express.Express;
         if (config || typeof configOrApp === "function") {
@@ -78,9 +78,9 @@ export default class Router {
             throw new Error("Incorrect method");
         }
         return (target, key, descriptor) => {
-            const router = this.getRouter(target);
+            const router: Router = this.getRouter(target);
             const route: IRoute = { path: router.baseUrl + path, method };
-            const value = (...args: any[]) => {
+            const value: Function = (...args: any[]) => {
                 const fn: express.RequestHandler = descriptor.value as any;
                 if (args[0] === null) {
                     router.app[route.method](route.path, (req, res, next) => {
@@ -96,22 +96,22 @@ export default class Router {
             });
             const rtn: TypedPropertyDescriptor<any> = {
                 value
-            }
+            };
             return rtn;
-        }
+        };
     }
 
     private constructor() { }
 
-    private start(listen: boolean) {
-        const objProto = Object.getPrototypeOf(this.cls);
-        const keys = Object.getOwnPropertyNames(objProto).sort().filter((e, i, arr) => {
-            let descriptor = Object.getOwnPropertyDescriptor(objProto, e);
+    private start(listen: boolean): void {
+        const objProto: object = Object.getPrototypeOf(this.cls);
+        const keys: string[] = Object.getOwnPropertyNames(objProto).sort().filter((e, i, arr) => {
+            let descriptor: PropertyDescriptor = Object.getOwnPropertyDescriptor(objProto, e);
             return (
-                (descriptor && descriptor.value["isRoute"]) &&
-                e != arr[i + 1] &&
-                typeof this.cls[e] == 'function' &&
-                e !== 'constructor') ? true : false;
+                (descriptor && descriptor.value.isRoute) &&
+                e !== arr[i + 1] &&
+                typeof this.cls[e] === "function" &&
+                e !== "constructor") ? true : false;
         });
         for (let key of keys) {
             this.cls[key](null);
