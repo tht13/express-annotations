@@ -25,17 +25,14 @@ class App3 {
 
 }
 
-const server: Server = ap.listen(port, () => {
-    console.log("blah");
+const startPromise: Promise<void> = new Promise(res => {
+    ap.listen(port, res);
 });
 
 const testcase: ITestFile = {
     classes: [App2, App3],
     port,
-    shutdown: () => {
-        server.close();
-        return Promise.resolve();
-    }
+    startPromise
 };
 
 export default testcase;

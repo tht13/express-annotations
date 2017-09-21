@@ -12,7 +12,8 @@ export function isValidMethod(method: string): boolean {
 export function getDefaultRouterConfig(): IRouterConfig {
     return {
         port: 3000,
-        hostname: "127.0.0.1"
+        hostname: "127.0.0.1",
+        startCb: () => void 0
     };
 }
 

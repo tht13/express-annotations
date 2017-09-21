@@ -13,6 +13,7 @@ export enum HttpMethods {
 export interface IRouterConfig {
     /** Adds a `/shutdown` route to the router */
     shutdownRoute?: string;
+    startCb?: () => any;
     port?: number;
     hostname?: string;
 }
@@ -124,7 +125,7 @@ export default class Router {
             this.cls[key](null);
         }
         if (this.expressListen) {
-            this.server = this.app.listen(this.config.port, this.config.hostname);
+            this.server = this.app.listen(this.config.port, this.config.hostname, this.config.startCb);
             if (this.config.shutdownRoute) {
                 this.app.get(this.config.shutdownRoute, (req, res) => {
                     res.status(200).end();

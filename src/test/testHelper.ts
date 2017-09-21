@@ -8,10 +8,15 @@ export function getRandomPort(min: number = 20000, max: number = 50000): number 
     return Math.floor((Math.random() * (max - min)) + min);
 }
 
+export interface ITestcase {
+    port: number;
+    routes: IRoute[];
+}
+
 export interface ITestFile {
     port: number;
     classes: any[];
-    shutdown: () => Promise<void>;
+    startPromise: Promise<void>;
 }
 
 export function getRoutes(cls: any): IRoute[] {

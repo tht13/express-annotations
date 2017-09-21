@@ -1,41 +1,44 @@
 import * as assert from "assert";
-import { getTestCases, getRoutes, TEST_CASE_DIR, ITestFile } from "./testHelper";
+import { getTestCases, ITestFile } from "./testHelper";
 import { join } from "path";
 import * as rp from "request-promise-native";
+import { IRoute } from "../helpers";
+import { IRunningTestcase, launchTestcase } from "./testcaseLauncher";
+
+let success: boolean = true;
 
 function timeout(ms: number = 1000): Promise<void> {
     return new Promise((res) => setTimeout(res, ms));
 }
 
-(async function (): Promise<void> {
+async function main(): Promise<void> {
     const testcases: string[] = (await getTestCases()).filter(name => name.endsWith(".js"));
-    const testfiles: ITestFile[] = [];
     for (let testcase of testcases) {
-        testfiles.push((await import(join(TEST_CASE_DIR, testcase))).default);
-    }
-    describe("TestCases", function (): void {
-        this.timeout(10000);
-        // tslint:disable-next-line:forin
-        for (let index in testcases) {
-            const testcase: string = testcases[index];
-            const testfile: ITestFile = testfiles[index];
-            describe(`Testcase: ${testcase}`, function (): void {
-                after(function (): Promise<void> {
-                    return testfile.shutdown();
-                });
-
-                for (let route of testfile.classes
-                    .map(cls => getRoutes(cls))
-                    .reduce((prev, curr) => prev.concat(curr), [])
-                ) {
-                    it(`Should have functioning path: ${route.path}`, async function (): Promise<void> {
-                        console.log(await rp[route.method](`http://localhost:${testfile.port}${route.path}`));
-                        return Promise.resolve();
-                    });
-                }
-            });
+        console.log(`Testing: ${testcase}`);
+        const testfile: IRunningTestcase = await launchTestcase(testcase);
+        for (let route of testfile.routes) {
+            await testRoute(route, testfile.port);
         }
-    });
-    await timeout();
-    run();
+        await testfile.shutdown();
+    }
+}
+
+async function testRoute(route: IRoute, port: number): Promise<void> {
+    console.log(`Testing route: [${route.method}]${route.path}`);
+    try {
+        let result: any = await rp[route.method](`http://localhost:${port}${route.path}`);
+        console.log(`Successful result: [${route.method}]${route.path}`);
+    } catch (e) {
+        console.warn(`Route Failed: [${route.method}]${route.path}`);
+        success = false;
+    }
+}
+
+(async () => {
+    await main();
+    if (!success) {
+        console.log("Failures occured");
+        return process.exit(1);
+    }
+    process.exit(0);
 })();

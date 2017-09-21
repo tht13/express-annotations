@@ -7,20 +7,10 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Mocha Tests",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-u",
-                "tdd",
-                "--timeout",
-                "999999",
-                "--colors",
-                "--delay",
-                "${workspaceRoot}/dist/test/index.test.js"
-            ],
-            "internalConsoleOptions": "openOnSessionStart",
-            "sourceMaps": true,
-            "preLaunchTask": "build"
+            "name": "Launch Tests",
+            "program": "${workspaceRoot}\\dist\\test\\index.test.js",
+            "preLaunchTask": "build",
+            "sourceMaps": true
         },
         {
             "type": "node",
@@ -28,7 +18,7 @@
             "name": "Launch Program",
             "program": "${workspaceRoot}\\dist\\test\\regularApp.test.js",
             "outFiles": [
-                "${workspaceRoot}/out/**/*.js"
+                "${workspaceRoot}/dist/**/*.js"
             ],
             "sourceMaps": true,
             "preLaunchTask": "build"
